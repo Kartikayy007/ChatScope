@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
 // import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 // import { LineChart, Line } from '@mui/x-charts';
@@ -87,9 +86,83 @@ const ANALYSIS_PROMPT = `Analyze this conversation and return ONLY a JSON object
 
 Important: Return ONLY the JSON object, with no markdown formatting or backticks. Ensure all numbers are actual numbers, not strings.`;
 
+interface Analysis {
+  moodMetrics?: {
+    happy: number;
+    neutral: number;
+    sad: number;
+  };
+  textingStyles?: {
+    person1: {
+      responseTime: number;
+      emojiUsage: number;
+      emojiStats: Array<{
+        emoji: string;
+        count: number;
+      }>;
+      ghostingScore: number;
+    };
+    person2: {
+      responseTime: number;
+      emojiUsage: number;
+      emojiStats: Array<{
+        emoji: string;
+        count: number;
+      }>;
+      ghostingScore: number;
+    };
+  };
+  conversationFlow?: {
+    dryTexting: number;
+    excitementLevel: number;
+    mutualInterest: number;
+    topicVariety: number;
+  };
+  petNames?: {
+    total: number;
+    person1Count: number;
+    person2Count: number;
+  };
+  debates?: {
+    resolved: number;
+    unresolved: number;
+  };
+  insideJokes?: {
+    count: number;
+    examples: string[];
+  };
+  compliments?: {
+    person1: number;
+    person2: number;
+  };
+  memoryLane?: {
+    firstMessage: string;
+    specialMoments: string[];
+  };
+  wordCloud?: Array<{
+    text: string;
+    size: number;
+  }>;
+  apologies?: {
+    person1: number;
+    person2: number;
+    mostApologetic: string;
+  };
+  media?: {
+    images: number;
+    gifs: number;
+  };
+  error?: string;
+}
+
+interface EmojiStat {
+  emoji: string;
+  count: number;
+}
+
 export default function ChatAnalyzer() {
   const [chatText, setChatText] = useState('');
-  const [analysis, setAnalysis] = useState<any>(null);
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1); // 1: Input, 2: Loading, 3: Results
   const [formatError, setFormatError] = useState(false);
@@ -130,10 +203,10 @@ export default function ChatAnalyzer() {
       const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim();
       
       try {
-        const parsedData = JSON.parse(cleanedText);
+        const parsedData = JSON.parse(cleanedText) as Analysis;
         setStep(3);
         setAnalysis(parsedData);
-      } catch (jsonError) {
+      } catch {
         console.error('Failed to parse JSON:', cleanedText);
         setAnalysis({ error: 'Invalid response format' });
         setStep(1);
@@ -532,7 +605,7 @@ export default function ChatAnalyzer() {
             <div className="space-y-2">
               {analysis?.insideJokes?.examples?.map((joke: string, index: number) => (
                 <div key={index} className="bg-white/5 rounded-lg p-2 text-sm text-[#4A5568]">
-                  "{joke}"
+                  &ldquo;{joke}&rdquo;
                 </div>
               ))}
             </div>
@@ -642,12 +715,12 @@ export default function ChatAnalyzer() {
               series={[
                 {
                   data: [
-                    ...(analysis?.textingStyles?.person1?.emojiStats?.map((stat: any, index: number) => ({
+                    ...(analysis?.textingStyles?.person1?.emojiStats?.map((stat: EmojiStat, index: number) => ({
                       id: index,
                       value: stat.count,
                       label: stat.emoji,
                     })) ?? []),
-                    ...(analysis?.textingStyles?.person2?.emojiStats?.map((stat: any, index: number) => ({
+                    ...(analysis?.textingStyles?.person2?.emojiStats?.map((stat: EmojiStat, index: number) => ({
                       id: index + 5,
                       value: stat.count,
                       label: stat.emoji,
@@ -711,7 +784,7 @@ export default function ChatAnalyzer() {
             className="text-[#4A5568] text-lg"
             style={{ fontFamily: '"Comic Sans MS", cursive' }}
           >
-            Let's get your chat in the right shape! ✨
+            Let&apos;s get your chat in the right shape! ✨
           </p>
         </div>
         
@@ -725,10 +798,10 @@ export default function ChatAnalyzer() {
             </p>
             <div className="bg-black/20 rounded-xl p-4 space-y-2">
               <code className="block text-[#4ECDC4] text-sm font-mono">
-                [17/01/25, 10:12:01 PM] Person1: Hello!
+                &ldquo;[17/01/25, 10:12:01 PM] Person1: Hello!&rdquo;
               </code>
               <code className="block text-[#4ECDC4] text-sm font-mono">
-                [17/01/25, 10:13:45 PM] Person2: Hi there!
+                &ldquo;[17/01/25, 10:13:45 PM] Person2: Hi there!&rdquo;
               </code>
             </div>
           </div>
@@ -754,11 +827,11 @@ export default function ChatAnalyzer() {
               </li>
               <li className="flex items-center gap-3">
                 <span className="w-8 h-8 bg-[#4ECDC4] rounded-full flex items-center justify-center text-[#4A5568] font-bold">3</span>
-                Select "Export chat"
+                Select Export chat
               </li>
               <li className="flex items-center gap-3">
                 <span className="w-8 h-8 bg-[#4ECDC4] rounded-full flex items-center justify-center text-[#4A5568] font-bold">4</span>
-                Choose "Without media"
+                Choose Without media
               </li>
               <li className="flex items-center gap-3">
                 <span className="w-8 h-8 bg-[#4ECDC4] rounded-full flex items-center justify-center text-[#4A5568] font-bold">5</span>

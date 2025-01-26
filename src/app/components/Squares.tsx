@@ -1,24 +1,41 @@
 import { useRef, useEffect, useState } from 'react';
 
-const Squares = ({
+interface SquaresProps {
+  direction?: 'right' | 'left' | 'up' | 'down' | 'diagonal';
+  speed?: number;
+  borderColor?: string;
+  squareSize?: number;
+  hoverFillColor?: string;
+}
+
+interface HoveredSquare {
+  x: number;
+  y: number;
+}
+
+const Squares: React.FC<SquaresProps> = ({
   direction = 'right',
   speed = 1,
   borderColor = '#999',
   squareSize = 40,
   hoverFillColor = '#222',
 }) => {
-  const canvasRef = useRef(null);
-  const requestRef = useRef(null);
-  const numSquaresX = useRef();
-  const numSquaresY = useRef();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const requestRef = useRef<number | null>(null);
+  const numSquaresX = useRef<number>(0);
+  const numSquaresY = useRef<number>(0);
   const gridOffset = useRef({ x: 0, y: 0 });
-  const [hoveredSquare, setHoveredSquare] = useState(null);
+  const [hoveredSquare, setHoveredSquare] = useState<HoveredSquare | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     const resizeCanvas = () => {
+      if (!canvas) return;
       canvas.width = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
       numSquaresX.current = Math.ceil(canvas.width / squareSize) + 1;
@@ -29,6 +46,8 @@ const Squares = ({
     resizeCanvas();
 
     const drawGrid = () => {
+      if (!canvas || !ctx) return;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       const startX = Math.floor(gridOffset.current.x / squareSize) * squareSize;
@@ -87,16 +106,14 @@ const Squares = ({
           gridOffset.current.x = (gridOffset.current.x - effectiveSpeed + squareSize) % squareSize;
           gridOffset.current.y = (gridOffset.current.y - effectiveSpeed + squareSize) % squareSize;
           break;
-        default:
-          break;
       }
 
       drawGrid();
       requestRef.current = requestAnimationFrame(updateAnimation);
     };
 
-    // Track mouse hover
-    const handleMouseMove = (event) => {
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
       const mouseX = event.clientX - rect.left;
       const mouseY = event.clientY - rect.top;
@@ -121,7 +138,9 @@ const Squares = ({
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
-      cancelAnimationFrame(requestRef.current);
+      if (requestRef.current) {
+        cancelAnimationFrame(requestRef.current);
+      }
       canvas.removeEventListener('mousemove', handleMouseMove);
       canvas.removeEventListener('mouseleave', handleMouseLeave);
     };
