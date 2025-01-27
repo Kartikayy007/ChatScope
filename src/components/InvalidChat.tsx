@@ -20,7 +20,7 @@ const InvalidChat = ({ setIsInvalidFormat }: InvalidChatProps) => {
           <AlertCircle size={48} className="text-black" />
           <h2 className="text-2xl font-bold text-black">Invalid Chat Format</h2>
           <p className="text-center text-black">
-            Please ensure you're using the WhatsApp chat export format.<br/>
+            Please ensure you&apos;re using the WhatsApp chat export format.<br/>
             Example: [26/01/24, 10:30:45 PM] Person: Message
           </p>
           <CustomButton onClick={handleTryAgain}>
