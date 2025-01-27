@@ -1,25 +1,22 @@
 "use client"
 
 import React, { useRef, useState } from 'react'
-import CustomButton from './ui/CustomButton'
+import CustomButton from './CustomButton'
 import { ClipboardPaste } from 'lucide-react'
-import InvalidChat from './InvalidChat'
-import { useAnalysisStore } from '@/store/useAnalysisStore'
-import Analysis from './Analysis'
+import InvalidChat from '../InvalidChat'
+import { useGeminiStore } from '@/store/useGeminiStore'
 
 const TextArea = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isInvalidFormat, setIsInvalidFormat] = useState(false);
-  const [showAnalysis, setShowAnalysis] = useState(false);
-  const { analyzeChat, isLoading } = useAnalysisStore();
 
   const validateWhatsAppFormat = (text: string) => {
     const regex = /^\[\d{1,2}\/\d{1,2}\/\d{2,4},\s\d{1,2}:\d{2}:\d{2}\s[AP]M\]/;
     return regex.test(text.split('\n')[0]);
   };
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = () => {
     const text = textareaRef.current?.value;
     if (!text) return;
 
@@ -27,14 +24,10 @@ const TextArea = () => {
       setIsInvalidFormat(true);
       return;
     }
-    
     setIsInvalidFormat(false);
-    try {
-      await analyzeChat(text);
-      setShowAnalysis(true);
-    } catch (error) {
-      console.error('Analysis failed:', error);
-    }
+
+    useGeminiStore.getState().analyzeChat(text);
+
   }
 
   async function paste(input: HTMLTextAreaElement | null) {
@@ -42,7 +35,6 @@ const TextArea = () => {
     const text = await navigator.clipboard.readText();
     input.value = text;
     setIsInvalidFormat(false);
-    setShowAnalysis(false);
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -63,16 +55,11 @@ const TextArea = () => {
       const text = await file.text();
       textareaRef.current.value = text;
       setIsInvalidFormat(false);
-      setShowAnalysis(false);
     }
   }
 
   if (isInvalidFormat) {
     return <InvalidChat setIsInvalidFormat={setIsInvalidFormat} />;
-  }
-
-  if (showAnalysis) {
-    return <Analysis />;
   }
 
   return (
@@ -99,10 +86,10 @@ const TextArea = () => {
       </div>
       
       <CustomButton onClick={handleAnalyze}>
-        {isLoading ? 'Analyzing...' : 'Analyze Chat'}
+        Analyze Chat
       </CustomButton>
     </div>
   )
 }
 
-export default TextArea; 
+export default TextArea

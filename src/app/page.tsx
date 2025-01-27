@@ -1,6 +1,6 @@
 import React from 'react'
 import SplineScene from '../components/SplineScene'
-import TextArea from '@/components/TextArea'
+import TextArea from '@/components/ui/TextArea'
 
 const page = () => {
   return (
